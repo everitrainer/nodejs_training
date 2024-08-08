@@ -12,7 +12,7 @@ app
     .get('/:id', (req, res) => {
         console.log("GET by id is called");
         const { id } = req.params;
-        const game = games.find(game => game.id === parseInt(id))
+        let game = games.find(game => game.id === parseInt(id))
         if (game) {
             res.status(200).send(game)
         } else {
@@ -22,7 +22,7 @@ app
     .post('/', (req, res) => {
         console.log("Post is called");
         const { name } = req.body;
-        const newGame = { name, id: ++counter };
+        let newGame = { name, id: ++counter };
         games.push(newGame)
         res.status(201).send(newGame)
     })
@@ -35,7 +35,7 @@ app
             games[gameIndex].name = name;
             res.status(200).send(games[gameIndex])
         } else {
-            const newGame = { name, id: ++counter };
+            let newGame = { name, id: ++counter };
             games.push(newGame)
             res.status(201).send(newGame)
         }
@@ -56,8 +56,9 @@ app
         console.log("Delete is called");
         const { id } = req.params;
         const gameIndex = games.findIndex((game) => game.id === parseInt(id))
-        if (gameIndex != -1) {
-            games = games.filter(game => game.id !== parseInt(id))
+        console.log(gameIndex)
+        if (gameIndex !== -1) {
+            games.splice(gameIndex, 1)
             res.json({ "message": "Deleted Successfully" })
         } else {
             res.status(404).send({ "error": "Game with this id doesnt exist" })
