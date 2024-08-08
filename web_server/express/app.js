@@ -1,6 +1,7 @@
 import express from 'express';
 import { games } from './database/data.js';
 import bodyParser from 'body-parser';
+import { getCachedGame, client } from './caching/index.js'
 const app = express();
 app.use(bodyParser.json())
 let counter = games.length;
@@ -9,14 +10,27 @@ app
         console.log("GET is called");
         res.status(200).json(games).send();
     })
-    .get('/:id', (req, res) => {
+    .get('/:id', async (req, res) => {
         console.log("GET by id is called");
         const { id } = req.params;
-        let game = games.find(game => game.id === parseInt(id))
-        if (game) {
-            res.status(200).send(game)
+        const cachedGame = await getCachedGame(id);
+        if (cachedGame) {
+            console.log("Present in Cache")
+            res.status(200).send(cachedGame)
         } else {
-            res.status(404).send({ "error": "Game with this id doesnt exist" })
+            console.log("Not present in Cache")
+            let game = games.find(game => game.id === parseInt(id));
+            if (game) {
+                client.set(id, game, 60 * 60, (error, result) => {
+                    if (error) {
+                        console.error('Error setting cache:', error);
+                    } else {
+                        res.status(200).send(game)
+                    }
+                });
+            } else {
+                res.status(404).send({ "error": "Game with this id doesnt exist" })
+            }
         }
     })
     .post('/', (req, res) => {
